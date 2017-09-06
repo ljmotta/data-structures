@@ -8,69 +8,54 @@
 
 namespace structures {
 
-template<typename T>
-
 /*!
- *
- * TODO: DOCUMENTATION!
- *
- *
- */
+ * \brief LinkedStack implementa uma pilha encadeada
+ */    
+template<typename T>
 class LinkedStack {
  public:
     /*!
-     *
-     * TODO: DOCUMENTATION!
-     *
-     *
+     * \brief Destrutor
      */
     ~LinkedStack();
 
     /*!
-     *
-     * TODO: DOCUMENTATION!
-     *
-     *
+     * \brief Remove todos os elementos da pilha
      */
     void clear();
 
     /*!
-     *
-     * TODO: DOCUMENTATION!
-     *
-     *
+     * \brief Coloca um elemento no topo da pilha
+     * 
+     * \param data, dado a ser armazenado
      */
     void push(const T& data);
 
     /*!
+     * \brief Retira o elemento que está no topo da lista
      *
-     * TODO: DOCUMENTATION!
-     *
-     *
+     * \return uma copia do dado que estava no topo da lista
      */
     T pop();
 
     /*!
+     * \brief Passa a referencia do dado que está no topo da lista
      *
-     * TODO: DOCUMENTATION!
-     *
-     *
+     * \return referencia do dado do topo da lista.
      */
     T& top() const;
 
     /*!
+     * \brief Verifica se a pilha esta vazia
      *
-     * TODO: DOCUMENTATION!
-     *
-     *
+     * \return true caso a pilha esteja vazia, caso contrario false
      */
     bool empty() const;
 
     /*!
+     * \brief Passa o tamanho da pilha
      *
-     * TODO: DOCUMENTATION!
-     *
-     *
+     * \return tamanho da pilha
      */
     std::size_t size() const;
 
@@ -114,29 +99,27 @@ class LinkedStack {
 
     template<typename T>
     void LinkedStack<T>::push(const T &data) {
-        if (empty) {
-            top_->next(new Node(data, nullptr));
-        } else {
-            top_->next(new Node(data, top_->next()));
-        }
+        top_ = new Node(data, top_);
         ++size_;
     }
 
     template<typename T>
     T LinkedStack<T>::pop() {
-        if (empty()) {
-            std::out_of_range("EMPTY");
-        }
+        if (empty())
+            throw std::out_of_range("EMPTY");
         auto to_delete = end();
-        top_->next(to_delete->next());
+        auto data = std::move(to_delete->data());
+        top_ = top_->next();
         --size_;
         delete to_delete;
-        return top_->next()->data();
+        return data;
     }
 
     template<typename T>
     T& LinkedStack<T>::top() const {
-        return top_->next()->data();
+        if (empty())
+            throw std::out_of_range("EMPTY");
+        return top_->data();
     }
 
     template<typename T>
