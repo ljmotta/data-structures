@@ -252,8 +252,8 @@ class LinkedList {
         auto old_head = head;
         auto data = std::move(head->data());
         head = head->next();
-        delete old_head;
         --size_;
+        delete old_head;
         return data;
     }
 

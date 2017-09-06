@@ -129,53 +129,44 @@ class DoublyLinkedList {
      public:
         explicit Node(const T& data): data_{data} {}
 
-        Node(const T& data, Node* next): data_{data}, next{next} {}
+        Node(const T& data, Node* next): data_{data}, next_{next} {}
 
-        Node(const T& data, Node* prev, Node* next): 
-            data_{data}, prev{prev}, next{next} {}
+        Node(const T& data, Node* prev, Node* next):
+            data_{data}, prev_{prev}, next_{next} {}
 
         T& data() { return data_; }
 
         const T& data() const { return data_; }
 
-        Node* prev() { return prev; }
+        Node* prev() { return prev_; }
 
-        const Node* prev() const { return prev; }
+        const Node* prev() const { return prev_; }
 
-        void prev(Node* node) { prev = node; }
+        void prev(Node* node) { prev_ = node; }
 
-        Node* next() { return next; }
+        Node* next() { return next_; }
 
-        const Node* next() const { return next; }
+        const Node* next() const { return next_; }
 
-        void next(Node* node) { next = node; }
+        void next(Node* node) { next_ = node; }
 
      private:
-        Node* nodeAt(std::size_t index) {
-            if (index >= size_)
-                throw std::out_of_range("INDEX OUT OF BOUNDS");
-            if (index >= size_/2) {
-                auto it = tail;
-                for (std::size_t i = index; i < size_; i++) {
-                    it = it->prev();
-                }
-            }
-            else {
-                auto it = head;
-                for (std::size_t i = 0u; i < index; i++) {
-                    it = it->next();
-                }
-            }
-            return it;
-        }
-
         T data_;
         Node* prev_{nullptr};
         Node* next_{nullptr};
     };
 
+    Node* nodeAt(std::size_t index) {
+        if (index >= size_)
+            throw std::out_of_range("INDEX OUT OF BOUNDS AT");
+        auto it = head;
+        for (auto i = 0u; i < index; ++i) {
+            it = it->next();
+        }
+        return it;
+    }
+
     Node* head{nullptr};
-    Node* tail{nullptr};
     std::size_t size_{0u};
 };
 
@@ -194,60 +185,88 @@ class DoublyLinkedList {
         return insert(data, size());
     }
 
-    // to implement
     template<typename T>
     void DoublyLinkedList<T>::push_front(const T& data) {
-        head = new Node(data, head->prev(), head);
+        head = new Node(data, head);
+        if (head->next() != nullptr)
+            head->next()->prev(head);
         ++size_;
     }
 
-    // to implement
     template<typename T>
     void DoublyLinkedList<T>::insert(const T& data, std::size_t index) {
         if (index == 0)
             return push_front(data);
-        auto it_prev = nodeAt(index-1);
-        it_prev->next(new Node(data, it_prev, it_prev->next()));
+        auto it = nodeAt(index-1);
+        auto new_node = new Node(data, it, it->next());
+        if (it->next() != nullptr)
+            it->next()->prev(new_node);
+        it->next(new_node);
         ++size_;
     }
 
-    // to implement
     template<typename T>
     void DoublyLinkedList<T>::insert_sorted(const T& data) {
+        if (empty() || data <= head->data())
+            return push_front(data);
+        auto it = head;
+        while (it->next() != nullptr && data > it->next()->data()) {
+            it = it->next();
+        }
+        auto new_node = new Node(data, it, it->next());
+        if (it->next() != nullptr)
+            it->next()->prev(new_node);
+        it->next(new_node);
+        ++size_;
     }
 
-    // to implement
     template<typename T>
     T DoublyLinkedList<T>::pop(std::size_t index) {
-        if (empty())
-            throw std::out_of_range("EMPTY");
         if (index == 0)
             return pop_front();
-        auto to_delete =
+        auto to_delete = nodeAt(index);
+        auto data = std::move(to_delete->data());
+        if (to_delete->next() != nullptr)
+            to_delete->next()->prev(to_delete->prev());
+        to_delete->prev()->next(to_delete->next());
+        delete to_delete;
+        --size_;
+        return data;
     }
 
     template<typename T>
     T DoublyLinkedList<T>::pop_back() { return pop(size()-1); }
 
-    // to implement
     template<typename T>
-    T DoublyLinkedList<T>::pop_front() { 
+    T DoublyLinkedList<T>::pop_front() {
         if (empty())
             throw std::out_of_range("EMPTY");
+        auto to_delete = head;
+        auto data = std::move(to_delete->data());
+        head = to_delete->next();
+        if (head != nullptr)
+            head->prev(to_delete->prev());
+        --size_;
+        delete to_delete;
+        return data;
     }
 
-    // to implement
     template<typename T>
     void DoublyLinkedList<T>::remove(const T& data) {
+        auto to_remove = nodeAt(find(data));
+        if (to_remove->next() != nullptr)
+            to_remove->next()->prev(to_remove->prev());
+        to_remove->prev()->next(to_remove->next());
+        delete to_remove;
+        --size_;
     }
 
     template<typename T>
     bool DoublyLinkedList<T>::empty() const { return size() == 0u; }
 
-    // to implement
     template<typename T>
     bool DoublyLinkedList<T>::contains(const T& data) const {
-        return true;
+        return find(data) != size();
     }
 
     template<typename T>
@@ -260,10 +279,15 @@ class DoublyLinkedList {
         return nodeAt(index)->data();
     }
 
-    // to implement
     template<typename T>
     std::size_t DoublyLinkedList<T>::find(const T& data) const {
-        return size_;
+        auto it = head;
+        std::size_t index = 0u;
+        while (it != nullptr && it->data() != data) {
+            it = it->next();
+            index++;
+        }
+        return index;
     }
 
     template<typename T>
